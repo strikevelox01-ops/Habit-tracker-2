@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Habit Radar - Ultimate Pro</title>
+    <title>Habit Radar - Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; transition: background 0.3s; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; color: #1e293b; }
         .tab-active { color: #22c55e; border-bottom: 3px solid #22c55e; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
         .day-box { aspect-ratio: 1; border-radius: 10px; display: flex; items-center; justify-center; font-size: 11px; font-weight: 800; border: 1px solid #f1f5f9; }
         .icon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-height: 200px; overflow-y: auto; padding: 10px; }
-        .icon-item { padding: 10px; border-radius: 12px; font-size: 20px; transition: all 0.2s; border: 2px solid transparent; background: #f8fafc; }
+        .icon-item { padding: 10px; border-radius: 12px; font-size: 20px; transition: all 0.2s; background: #f8fafc; border: 2px solid transparent; }
         .icon-item.selected { border-color: #22c55e; background: #f0fdf4; transform: scale(1.1); }
         .no-scrollbar::-webkit-scrollbar { width: 4px; }
         .no-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
@@ -21,12 +21,9 @@
 </head>
 <body class="pb-32">
 
-    <header class="px-6 pt-10 pb-2 sticky top-0 bg-white/95 backdrop-blur-md z-30 border-b border-slate-50">
+    <header class="px-6 pt-10 pb-2 sticky top-0 bg-white/95 backdrop-blur-md z-30">
         <div class="flex justify-between items-center max-w-2xl mx-auto mb-6">
-            <div class="flex gap-4">
-                <button onclick="toggleDarkMode()" class="text-2xl">🌓</button>
-            </div>
-            <h1 class="text-2xl font-black text-slate-800 tracking-tight">Habit Radar</h1>
+            <h1 class="text-2xl font-black tracking-tight">Habit Radar</h1>
             <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-xl">🏆</div>
         </div>
 
@@ -51,10 +48,7 @@
         <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
             <h2 class="text-2xl font-black mb-6">New Goal</h2>
             <input id="h-input" type="text" placeholder="Habit name..." class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none border-2 border-slate-100 focus:border-green-400 font-bold">
-            
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Select Icon (50+)</p>
             <div id="icon-picker" class="icon-grid no-scrollbar mb-6"></div>
-
             <div class="flex gap-3">
                 <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400">Cancel</button>
                 <button onclick="saveHabit()" class="flex-1 bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg">Create</button>
@@ -63,26 +57,15 @@
     </div>
 
     <script>
-        let habits = JSON.parse(localStorage.getItem('habit_radar_v6')) || [];
+        let habits = JSON.parse(localStorage.getItem('habit_radar_v7')) || [];
         let currentTab = 'weekly';
         let selectedEmoji = '⭐';
-        
-        const emojiList = [
-            '🏋️','🧘','🏃','🚲','🏊','🥗','💧','🍎','💊','😴',
-            '📚','💻','✍️','🎨','🎸','🎹','🎮','🧠','📖','🏫',
-            '💸','📈','🛒','🧹','🧼','🌱','🐶','🐱','🦜','🚿',
-            '☕','🍵','🥛','🥩','🥕','🍇','🍓','☀️','🌙','✨',
-            '🗣️','🤝','📞','❤️','🙏','⏰','🎯','🔥','✅','⭐'
-        ];
-
-        function toggleDarkMode() { document.body.classList.toggle('bg-slate-900'); }
+        const emojiList = ['🏋️','🧘','🏃','🚲','🏊','🥗','💧','🍎','💊','😴','📚','💻','✍️','🎨','🎸','🎹','🎮','🧠','📖','🏫','💸','📈','🛒','🧹','🧼','🌱','🐶','🐱','🦜','🚿','☕','🍵','🥛','🥩','🥕','🍇','🍓','☀️','🌙','✨','🗣️','🤝','📞','❤️','🙏','⏰','🎯','🔥','✅','⭐'];
 
         function openModal() {
             document.getElementById('modal').style.display = 'flex';
             const picker = document.getElementById('icon-picker');
-            picker.innerHTML = emojiList.map(e => `
-                <button onclick="selectEmoji(this, '${e}')" class="icon-item ${e === '⭐' ? 'selected' : ''}">${e}</button>
-            `).join('');
+            picker.innerHTML = emojiList.map(e => `<button onclick="selectEmoji(this, '${e}')" class="icon-item">${e}</button>`).join('');
         }
 
         function selectEmoji(el, emoji) {
@@ -100,17 +83,24 @@
             render();
         }
 
-        function updateProgress() {
+        function updateProgress(forceConfetti = false) {
             const today = new Date().toISOString().split('T')[0];
             const done = habits.filter(h => h.history.includes(today)).length;
             const pct = habits.length ? (done / habits.length) * 100 : 0;
             document.getElementById('progress-bar').style.width = pct + '%';
-            if (pct === 100 && habits.length > 0) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+            if (pct === 100 && habits.length > 0) {
+                const lastCelebrated = localStorage.getItem('last_confetti_date');
+                if (lastCelebrated !== today || forceConfetti) {
+                    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 999 });
+                    localStorage.setItem('last_confetti_date', today);
+                }
+            }
         }
 
         function render() {
             const container = document.getElementById('app-content');
-            updateProgress();
+            updateProgress(false); // Update bar without forcing confetti
             
             if (habits.length === 0) {
                 container.innerHTML = `<div class="text-center mt-20 text-slate-400 font-bold">No habits yet. Tap + to start!</div>`;
@@ -122,62 +112,58 @@
                 container.innerHTML = habits.map(h => {
                     const isDone = h.history.includes(today);
                     return `
-                    <div onclick="toggleToday(${h.id})" class="p-6 rounded-[2rem] border-2 mb-4 flex justify-between items-center transition-all ${isDone ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-100'}">
+                    <div onclick="toggleToday(${h.id})" class="p-6 rounded-[2rem] border-2 mb-4 flex justify-between items-center transition-all ${isDone ? 'bg-green-50 border-green-200 opacity-70' : 'bg-slate-50 border-slate-100 shadow-sm'}">
                         <div class="flex items-center gap-4">
                             <span class="text-2xl">${h.icon}</span>
                             <span class="font-black text-slate-700">${h.name}</span>
                         </div>
-                        <div class="w-10 h-10 rounded-full border-2 flex items-center justify-center ${isDone ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}">
-                            ${isDone ? '✓' : ''}
-                        </div>
+                        <div class="w-10 h-10 rounded-full border-2 flex items-center justify-center ${isDone ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}">${isDone ? '✓' : ''}</div>
                     </div>`;
                 }).join('');
             } else if (currentTab === 'weekly') {
                 container.innerHTML = habits.map(h => `
                     <div class="p-6 rounded-[2.5rem] bg-slate-50 border border-slate-100 mb-6 relative shadow-sm">
-                        <button onclick="deleteH(${h.id})" class="absolute top-5 right-6 text-slate-300 hover:text-red-400">✕</button>
-                        <div class="flex items-center gap-4 mb-4">
+                        <button onclick="deleteH(${h.id})" class="absolute top-5 right-6 text-slate-300">✕</button>
+                        <div class="flex items-center gap-4">
                             <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-slate-50">${h.icon}</div>
                             <div>
                                 <h3 class="font-black text-slate-800 text-lg">${h.name}</h3>
-                                <p class="text-xs font-bold text-orange-500">🔥 ${h.history.length} DAY STREAK</p>
+                                <p class="text-xs font-bold text-orange-500 uppercase tracking-tighter">🔥 ${h.history.length} Hits</p>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    </div>`).join('');
             } else {
                 renderCalendar(container);
             }
-            localStorage.setItem('habit_radar_v6', JSON.stringify(habits));
+            localStorage.setItem('habit_radar_v7', JSON.stringify(habits));
         }
 
         function renderCalendar(container) {
             const date = new Date();
             const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-            container.innerHTML = `
-                <h2 class="text-xl font-black mb-6 text-slate-800">Monthly Progress</h2>
-                ${habits.map(h => `
-                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 mb-8 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="font-black text-slate-700 text-xs uppercase tracking-widest">${h.icon} ${h.name}</span>
-                            <span class="text-[10px] font-bold text-green-500">${h.history.length} Hits</span>
-                        </div>
-                        <div class="calendar-grid">
-                            ${Array.from({length: daysInMonth}).map((_, i) => {
-                                const dKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`;
-                                const isDone = h.history.includes(dKey);
-                                return `<div class="day-box ${isDone ? 'bg-green-500 text-white border-green-500' : 'bg-white text-slate-300'}">${i+1}</div>`;
-                            }).join('')}
-                        </div>
+            container.innerHTML = habits.map(h => `
+                <div class="bg-white p-6 rounded-[2.5rem] border border-slate-100 mb-8 shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="font-black text-slate-700 text-xs uppercase tracking-widest">${h.icon} ${h.name}</span>
                     </div>
-                `).join('')}`;
+                    <div class="calendar-grid">
+                        ${Array.from({length: daysInMonth}).map((_, i) => {
+                            const dKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`;
+                            const isDone = h.history.includes(dKey);
+                            return `<div class="day-box ${isDone ? 'bg-green-500 text-white border-green-500' : 'bg-white text-slate-300'}">${i+1}</div>`;
+                        }).join('')}
+                    </div>
+                </div>`).join('');
         }
 
         function toggleToday(id) {
             const h = habits.find(x => x.id === id);
             const today = new Date().toISOString().split('T')[0];
             if(h.history.includes(today)) h.history = h.history.filter(d => d !== today);
-            else h.history.push(today);
+            else {
+                h.history.push(today);
+                updateProgress(true); // Force confetti only when checking a box
+            }
             render();
         }
 
@@ -190,7 +176,7 @@
             render();
         }
 
-        function deleteH(id) { if(confirm("Delete this habit?")) { habits = habits.filter(x => x.id !== id); render(); } }
+        function deleteH(id) { if(confirm("Delete habit?")) { habits = habits.filter(x => x.id !== id); render(); } }
 
         render();
     </script>
