@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Habit Radar Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; touch-action: manipulation; }
+        .habit-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .check-circle { transition: all 0.2s ease; border: 2px solid rgba(255,255,255,0.4); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .checked-anim { animation: pop 0.3s ease-out; }
+    </style>
+</head>
+<body class="bg-white min-h-screen pb-32">
+
+    <header class="px-6 pt-12 pb-4 sticky top-0 bg-white/90 backdrop-blur-md z-20">
+        <div class="flex justify-between items-center max-w-2xl mx-auto">
+            <div class="space-y-1.5 cursor-pointer">
+                <div class="w-7 h-1 bg-green-500 rounded-full"></div>
+                <div class="w-5 h-1 bg-green-500 rounded-full"></div>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Habit Radar</h1>
+            <div class="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center shadow-sm text-2xl">🏆</div>
+        </div>
+
+        <nav class="flex justify-around mt-8 text-sm font-bold text-slate-400 border-b border-slate-50 max-w-2xl mx-auto pb-4">
+            <button class="hover:text-slate-800">Today</button>
+            <button class="text-green-500 relative after:content-[''] after:absolute after:-bottom-4 after:left-0 after:w-full after:h-1.5 after:bg-green-500 after:rounded-t-full">Weekly</button>
+            <button class="hover:text-slate-800">Overall</button>
+        </nav>
+    </header>
+
+    <main id="habit-container" class="max-w-2xl mx-auto px-6 mt-6 space-y-6">
+        </main>
+
+    <div class="fixed bottom-8 left-0 right-0 flex justify-center z-30 pointer-events-none">
+        <div class="max-w-2xl w-full flex justify-end px-6 pointer-events-auto">
+            <button onclick="openModal()" class="w-16 h-16 bg-green-400 rounded-full shadow-2xl flex items-center justify-center text-white text-4xl hover:scale-110 active:scale-90 transition-all">
+                +
+            </button>
+        </div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
+            <h2 class="text-2xl font-black mb-6">New Habit</h2>
+            <input id="h-input" type="text" placeholder="Habit name..." class="w-full bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 mb-6 outline-none focus:border-green-400 font-bold">
+            <div class="flex gap-2 mb-8">
+                <button onclick="selCol('#F5F3FF','#A78BFA')" class="w-8 h-8 rounded-full bg-purple-200 border-2 border-white"></button>
+                <button onclick="selCol('#F0FDF4','#4ADE80')" class="w-8 h-8 rounded-full bg-green-200 border-2 border-white"></button>
+                <button onclick="selCol('#FEF2F2','#F87171')" class="w-8 h-8 rounded-full bg-red-200 border-2 border-white"></button>
+                <button onclick="selCol('#EFF6FF','#60A5FA')" class="w-8 h-8 rounded-full bg-blue-200 border-2 border-white"></button>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400">Cancel</button>
+                <button onclick="saveHabit()" class="flex-1 bg-green-400 text-white py-4 rounded-2xl font-black shadow-lg shadow-green-100">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let habits = JSON.parse(localStorage.getItem('habits_v2')) || [
+            { id: 1, name: 'Go to gym', color: '#F5F3FF', accent: '#A78BFA', icon: '🏋️', logs: [1, 1, 1, 1, 0, 0, 0] },
+            { id: 2, name: 'Meditate', color: '#F0FDF4', accent: '#4ADE80', icon: '🧘', logs: [1, 1, 1, 0, 0, 0, 0] }
+        ];
+
+        let selectedColor = { main: '#F5F3FF', accent: '#A78BFA' };
+        const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+        function calcStreak(logs) {
+            let s = 0;
+            for(let i = logs.length-1; i >= 0; i--) {
+                if(logs[i]) s++; else if(s > 0) break;
+            }
+            return s;
+        }
+
+        function render() {
+            const container = document.getElementById('habit-container');
+            container.innerHTML = habits.map(h => `
+                <div class="habit-card p-6 rounded-[2.5rem] relative overflow-hidden shadow-sm" style="background-color: ${h.color}">
+                    <button onclick="deleteHabit(${h.id})" class="absolute top-4 right-4 text-slate-300 hover:text-red-400 text-xs font-bold">✕</button>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-14 h-14 bg-white/60 rounded-2xl flex items-center justify-center text-2xl border border-white/40 shadow-inner">${h.icon || '⭐'}</div>
+                        <div>
+                            <h3 class="font-extrabold text-slate-800 text-lg leading-tight">${h.name}</h3>
+                            <div class="flex items-center gap-1 text-orange-600 font-bold text-sm">
+                                <span>🔥</span> <span>${calcStreak(h.logs)} Day Streak</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        ${days.map((d, i) => `
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="text-[10px] font-black text-slate-400/60 uppercase">${d}</span>
+                                <div onclick="toggle(${h.id}, ${i})" 
+                                     class="check-circle w-10 h-10 rounded-full flex items-center justify-center cursor-pointer shadow-sm ${h.logs[i] ? 'checked-anim' : ''}"
+                                     style="background-color: ${h.logs[i] ? h.accent : 'rgba(255,255,255,0.4)'}">
+                                    ${h.logs[i] ? '<span class="text-white font-bold">✓</span>' : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            localStorage.setItem('habits_v2', JSON.stringify(habits));
+        }
+
+        function toggle(hid, idx) {
+            const h = habits.find(x => x.id === hid);
+            h.logs[idx] = h.logs[idx] ? 0 : 1;
+            render();
+        }
+
+        function deleteHabit(id) {
+            if(confirm("Delete this habit?")) {
+                habits = habits.filter(h => h.id !== id);
+                render();
+            }
+        }
+
+        function openModal() { document.getElementById('modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        function selCol(m, a) { selectedColor = { main: m, accent: a }; }
+
+        function saveHabit() {
+            const name = document.getElementById('h-input').value;
+            if(!name) return;
+            habits.unshift({
+                id: Date.now(),
+                name: name,
+                color: selectedColor.main,
+                accent: selectedColor.accent,
+                logs: [0,0,0,0,0,0,0]
+            });
+            document.getElementById('h-input').value = '';
+            closeModal();
+            render();
+        }
+
+        render();
+    </script>
+</body>
+</html>
