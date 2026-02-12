@@ -3,144 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Habit Radar Pro</title>
+    <title>Habit Radar - Real Time</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; touch-action: manipulation; }
-        .habit-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .check-circle { transition: all 0.2s ease; border: 2px solid rgba(255,255,255,0.4); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; }
+        .tab-active { color: #22c55e; border-bottom: 3px solid #22c55e; }
+        .today-highlight { outline: 3px solid #22c55e; outline-offset: 4px; border-radius: 99px; position: relative; }
+        .today-highlight::after { content: 'TODAY'; position: absolute; top: -18px; font-size: 8px; font-weight: 800; color: #22c55e; letter-spacing: 0.5px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .checked-anim { animation: pop 0.3s ease-out; }
     </style>
 </head>
-<body class="bg-white min-h-screen pb-32">
+<body class="bg-white min-h-screen">
 
-    <header class="px-6 pt-12 pb-4 sticky top-0 bg-white/90 backdrop-blur-md z-20">
+    <header class="px-6 pt-10 pb-2 sticky top-0 bg-white/90 backdrop-blur-md z-30">
         <div class="flex justify-between items-center max-w-2xl mx-auto">
-            <div class="space-y-1.5 cursor-pointer">
-                <div class="w-7 h-1 bg-green-500 rounded-full"></div>
-                <div class="w-5 h-1 bg-green-500 rounded-full"></div>
-            </div>
-            <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Habit Radar</h1>
-            <div class="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center shadow-sm text-2xl">🏆</div>
+            <div class="space-y-1.5"><div class="w-7 h-1 bg-green-500 rounded-full"></div><div class="w-4 h-1 bg-green-500 rounded-full"></div></div>
+            <h1 class="text-2xl font-black text-slate-800">Habit Radar</h1>
+            <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">🏆</div>
         </div>
 
-        <nav class="flex justify-around mt-8 text-sm font-bold text-slate-400 border-b border-slate-50 max-w-2xl mx-auto pb-4">
-            <button class="hover:text-slate-800">Today</button>
-            <button class="text-green-500 relative after:content-[''] after:absolute after:-bottom-4 after:left-0 after:w-full after:h-1.5 after:bg-green-500 after:rounded-t-full">Weekly</button>
-            <button class="hover:text-slate-800">Overall</button>
+        <nav class="flex justify-around mt-8 text-sm font-bold text-slate-400 max-w-2xl mx-auto">
+            <button onclick="switchTab('today')" id="tab-today" class="pb-3 px-2">Today</button>
+            <button onclick="switchTab('weekly')" id="tab-weekly" class="pb-3 px-2 tab-active">Weekly</button>
+            <button onclick="switchTab('overall')" id="tab-overall" class="pb-3 px-2">Monthly</button>
         </nav>
     </header>
 
-    <main id="habit-container" class="max-w-2xl mx-auto px-6 mt-6 space-y-6">
-        </main>
+    <main id="app-content" class="max-w-2xl mx-auto px-6 mt-6 pb-32"></main>
 
-    <div class="fixed bottom-8 left-0 right-0 flex justify-center z-30 pointer-events-none">
-        <div class="max-w-2xl w-full flex justify-end px-6 pointer-events-auto">
-            <button onclick="openModal()" class="w-16 h-16 bg-green-400 rounded-full shadow-2xl flex items-center justify-center text-white text-4xl hover:scale-110 active:scale-90 transition-all">
-                +
-            </button>
-        </div>
+    <div class="fixed bottom-8 right-8 z-40">
+        <button onclick="document.getElementById('modal').style.display='flex'" class="w-16 h-16 bg-green-400 rounded-full shadow-xl text-white text-4xl">+</button>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+    <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-6">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
-            <h2 class="text-2xl font-black mb-6">New Habit</h2>
-            <input id="h-input" type="text" placeholder="Habit name..." class="w-full bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 mb-6 outline-none focus:border-green-400 font-bold">
-            <div class="flex gap-2 mb-8">
-                <button onclick="selCol('#F5F3FF','#A78BFA')" class="w-8 h-8 rounded-full bg-purple-200 border-2 border-white"></button>
-                <button onclick="selCol('#F0FDF4','#4ADE80')" class="w-8 h-8 rounded-full bg-green-200 border-2 border-white"></button>
-                <button onclick="selCol('#FEF2F2','#F87171')" class="w-8 h-8 rounded-full bg-red-200 border-2 border-white"></button>
-                <button onclick="selCol('#EFF6FF','#60A5FA')" class="w-8 h-8 rounded-full bg-blue-200 border-2 border-white"></button>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400">Cancel</button>
-                <button onclick="saveHabit()" class="flex-1 bg-green-400 text-white py-4 rounded-2xl font-black shadow-lg shadow-green-100">Create</button>
-            </div>
+            <h2 class="text-2xl font-black mb-6 text-slate-800">New Habit</h2>
+            <input id="h-name" type="text" placeholder="Exercise, Water..." class="w-full bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 mb-6 outline-none font-bold">
+            <button onclick="saveNewHabit()" class="w-full bg-green-400 text-white py-4 rounded-2xl font-black shadow-lg">Add Habit</button>
+            <button onclick="document.getElementById('modal').style.display='none'" class="w-full mt-2 text-slate-400 font-bold py-2">Cancel</button>
         </div>
     </div>
 
     <script>
-        let habits = JSON.parse(localStorage.getItem('habits_v2')) || [
-            { id: 1, name: 'Go to gym', color: '#F5F3FF', accent: '#A78BFA', icon: '🏋️', logs: [1, 1, 1, 1, 0, 0, 0] },
-            { id: 2, name: 'Meditate', color: '#F0FDF4', accent: '#4ADE80', icon: '🧘', logs: [1, 1, 1, 0, 0, 0, 0] }
+        let currentTab = 'weekly';
+        
+        // Days array shifted to start with Saturday as per your original design
+        const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+        
+        // Logical mapping: JS getDay() returns 0 for Sunday, 6 for Saturday.
+        // We need to map that to our array index [0=Sat, 1=Sun, 2=Mon, 3=Tue, 4=Wed, 5=Thu, 6=Fri]
+        const jsToRadarMap = [1, 2, 3, 4, 5, 6, 0];
+        const realTodayIndex = jsToRadarMap[new Date().getDay()];
+
+        let habits = JSON.parse(localStorage.getItem('habit_radar_v4')) || [
+            { id: 1, name: 'Go to gym', color: '#F5F3FF', accent: '#A78BFA', logs: [1,1,1,1,0,0,0], icon: '🏋️' },
+            { id: 2, name: 'Meditate', color: '#F0FDF4', accent: '#4ADE80', logs: [1,1,1,0,0,0,0], icon: '🧘' }
         ];
 
-        let selectedColor = { main: '#F5F3FF', accent: '#A78BFA' };
-        const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-
-        function calcStreak(logs) {
-            let s = 0;
-            for(let i = logs.length-1; i >= 0; i--) {
-                if(logs[i]) s++; else if(s > 0) break;
-            }
-            return s;
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
+            document.getElementById('tab-' + tab).classList.add('tab-active');
+            render();
         }
 
         function render() {
-            const container = document.getElementById('habit-container');
-            container.innerHTML = habits.map(h => `
-                <div class="habit-card p-6 rounded-[2.5rem] relative overflow-hidden shadow-sm" style="background-color: ${h.color}">
-                    <button onclick="deleteHabit(${h.id})" class="absolute top-4 right-4 text-slate-300 hover:text-red-400 text-xs font-bold">✕</button>
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-14 h-14 bg-white/60 rounded-2xl flex items-center justify-center text-2xl border border-white/40 shadow-inner">${h.icon || '⭐'}</div>
-                        <div>
-                            <h3 class="font-extrabold text-slate-800 text-lg leading-tight">${h.name}</h3>
-                            <div class="flex items-center gap-1 text-orange-600 font-bold text-sm">
-                                <span>🔥</span> <span>${calcStreak(h.logs)} Day Streak</span>
+            const container = document.getElementById('app-content');
+            if (currentTab === 'today') renderToday(container);
+            else if (currentTab === 'weekly') renderWeekly(container);
+            else renderMonthly(container);
+            localStorage.setItem('habit_radar_v4', JSON.stringify(habits));
+        }
+
+        function renderToday(container) {
+            const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+            container.innerHTML = `
+                <div class="py-6 text-center">
+                    <h2 class="text-4xl font-black text-slate-800">${days[realTodayIndex]}</h2>
+                    <p class="text-green-500 font-bold uppercase tracking-widest text-sm mt-1">${dateStr}</p>
+                </div>
+                <div class="space-y-4">
+                    ${habits.map(h => `
+                        <div onclick="toggle(${h.id}, ${realTodayIndex})" class="p-6 rounded-[2rem] border-2 flex justify-between items-center transition-all ${h.logs[realTodayIndex] ? 'bg-green-50 border-green-300' : 'bg-slate-50 border-slate-100'}">
+                            <span class="font-bold text-lg ${h.logs[realTodayIndex] ? 'text-green-700' : 'text-slate-600'}">${h.name}</span>
+                            <div class="w-10 h-10 rounded-full border-2 flex items-center justify-center ${h.logs[realTodayIndex] ? 'bg-green-500 border-green-500' : 'border-slate-300'}">
+                                ${h.logs[realTodayIndex] ? '<span class="text-white text-xl">✓</span>' : ''}
                             </div>
                         </div>
+                    `).join('')}
+                </div>`;
+        }
+
+        function renderWeekly(container) {
+            container.innerHTML = habits.map(h => `
+                <div class="p-6 rounded-[2.5rem] mb-6 shadow-sm" style="background-color: ${h.color}">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-white/60 rounded-2xl flex items-center justify-center text-2xl shadow-inner">${h.icon || '⭐'}</div>
+                            <div><h3 class="font-black text-slate-800 text-lg">${h.name}</h3><p class="text-xs font-bold text-orange-600">🔥 Current Streak</p></div>
+                        </div>
+                        <button onclick="deleteH(${h.id})" class="text-[10px] font-black text-slate-400 bg-white/40 px-3 py-1 rounded-full uppercase">Delete</button>
                     </div>
-                    <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-end px-1">
                         ${days.map((d, i) => `
-                            <div class="flex flex-col items-center gap-2">
-                                <span class="text-[10px] font-black text-slate-400/60 uppercase">${d}</span>
-                                <div onclick="toggle(${h.id}, ${i})" 
-                                     class="check-circle w-10 h-10 rounded-full flex items-center justify-center cursor-pointer shadow-sm ${h.logs[i] ? 'checked-anim' : ''}"
+                            <div class="flex flex-col items-center gap-3">
+                                <span class="text-[10px] font-black ${i === realTodayIndex ? 'text-green-600' : 'text-slate-400'}">${d}</span>
+                                <div onclick="toggle(${h.id}, ${i})" class="w-10 h-10 rounded-full border-2 border-white/40 flex items-center justify-center cursor-pointer transition-all ${i === realTodayIndex ? 'today-highlight' : ''}" 
                                      style="background-color: ${h.logs[i] ? h.accent : 'rgba(255,255,255,0.4)'}">
-                                    ${h.logs[i] ? '<span class="text-white font-bold">✓</span>' : ''}
+                                    ${h.logs[i] ? '<span class="text-white font-bold text-lg">✓</span>' : ''}
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
             `).join('');
-            localStorage.setItem('habits_v2', JSON.stringify(habits));
         }
 
-        function toggle(hid, idx) {
-            const h = habits.find(x => x.id === hid);
+        function renderMonthly(container) {
+            const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+            container.innerHTML = `
+                <h2 class="text-2xl font-black mb-6 text-slate-800">${currentMonth} Calendar</h2>
+                <div class="grid grid-cols-1 gap-6">
+                    ${habits.map(h => `
+                        <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                            <div class="flex justify-between mb-4"><span class="font-black text-slate-700 uppercase text-xs">${h.name}</span></div>
+                            <div class="calendar-grid">
+                                ${Array.from({length: 31}).map((_, i) => {
+                                    const isDone = Math.random() > 0.4; // Simulating data
+                                    return `<div class="aspect-square rounded-lg flex items-center justify-center text-[10px] font-bold ${isDone ? 'bg-green-400 text-white' : 'bg-slate-200 text-slate-400'}">${i+1}</div>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
+
+        function toggle(id, idx) {
+            const h = habits.find(x => x.id === id);
             h.logs[idx] = h.logs[idx] ? 0 : 1;
             render();
         }
 
-        function deleteHabit(id) {
-            if(confirm("Delete this habit?")) {
-                habits = habits.filter(h => h.id !== id);
-                render();
-            }
-        }
-
-        function openModal() { document.getElementById('modal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
-        function selCol(m, a) { selectedColor = { main: m, accent: a }; }
-
-        function saveHabit() {
-            const name = document.getElementById('h-input').value;
-            if(!name) return;
-            habits.unshift({
-                id: Date.now(),
-                name: name,
-                color: selectedColor.main,
-                accent: selectedColor.accent,
-                logs: [0,0,0,0,0,0,0]
-            });
-            document.getElementById('h-input').value = '';
-            closeModal();
+        function saveNewHabit() {
+            const n = document.getElementById('h-name').value;
+            if(!n) return;
+            habits.unshift({ id: Date.now(), name: n, color: '#F1F5F9', accent: '#94A3B8', logs: [0,0,0,0,0,0,0], icon: '⭐' });
+            document.getElementById('h-name').value = '';
+            document.getElementById('modal').style.display='none';
             render();
         }
+
+        function deleteH(id) { if(confirm("Remove habit?")) { habits = habits.filter(x => x.id !== id); render(); } }
 
         render();
     </script>
