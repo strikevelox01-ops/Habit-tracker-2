@@ -3,49 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Habit Radar - Real History</title>
+    <title>Habit Radar - Fully Working</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; touch-action: manipulation; }
         .tab-active { color: #22c55e; border-bottom: 3px solid #22c55e; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .day-box { aspect-ratio: 1; border-radius: 10px; display: flex; items-center; justify-center; font-size: 11px; font-weight: 800; transition: all 0.3s; }
+        .day-box { aspect-ratio: 1; border-radius: 10px; display: flex; items-center; justify-center; font-size: 11px; font-weight: 800; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-white min-h-screen">
+<body class="bg-white min-h-screen pb-32">
 
     <header class="px-6 pt-10 pb-2 sticky top-0 bg-white/90 backdrop-blur-md z-30">
         <div class="flex justify-between items-center max-w-2xl mx-auto">
             <div class="space-y-1.5"><div class="w-7 h-1 bg-green-500 rounded-full"></div><div class="w-4 h-1 bg-green-500 rounded-full"></div></div>
-            <h1 class="text-2xl font-black text-slate-800">Habit Radar</h1>
-            <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl">🏆</div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tight">Habit Radar</h1>
+            <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl shadow-sm">🏆</div>
         </div>
 
         <nav class="flex justify-around mt-8 text-sm font-bold text-slate-400 max-w-2xl mx-auto">
-            <button onclick="switchTab('today')" id="tab-today" class="pb-3 px-2">Today</button>
-            <button onclick="switchTab('weekly')" id="tab-weekly" class="pb-3 px-2 tab-active">Weekly</button>
-            <button onclick="switchTab('overall')" id="tab-overall" class="pb-3 px-2">Monthly</button>
+            <button onclick="switchTab('today')" id="tab-today" class="pb-3 px-2 transition-all">Today</button>
+            <button onclick="switchTab('weekly')" id="tab-weekly" class="pb-3 px-2 tab-active transition-all">Weekly</button>
+            <button onclick="switchTab('overall')" id="tab-overall" class="pb-3 px-2 transition-all">Monthly</button>
         </nav>
     </header>
 
-    <main id="app-content" class="max-w-2xl mx-auto px-6 mt-6 pb-32"></main>
+    <main id="app-content" class="max-w-2xl mx-auto px-6 mt-6"></main>
+
+    <div class="fixed bottom-8 right-8 z-40">
+        <button onclick="document.getElementById('modal').style.display='flex'" class="w-16 h-16 bg-green-400 rounded-full shadow-xl shadow-green-200 text-white text-4xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all">
+            +
+        </button>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
+            <h2 class="text-2xl font-black mb-6">New Habit</h2>
+            <input id="h-input" type="text" placeholder="Drink water, Gym..." class="w-full bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 mb-6 outline-none focus:border-green-400 font-bold">
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('modal').style.display='none'" class="flex-1 py-4 font-bold text-slate-400">Cancel</button>
+                <button onclick="saveHabit()" class="flex-1 bg-green-400 text-white py-4 rounded-2xl font-black shadow-lg">Create</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // CORE DATA SYSTEM
-        // 'history' stores actual dates like "2026-02-12"
-        let habits = JSON.parse(localStorage.getItem('habit_radar_real')) || [
+        // Storage Logic
+        let habits = JSON.parse(localStorage.getItem('habit_radar_pro_v5')) || [
             { id: 1, name: 'Go to gym', color: '#F5F3FF', accent: '#A78BFA', history: [], icon: '🏋️' },
             { id: 2, name: 'Meditate', color: '#F0FDF4', accent: '#4ADE80', history: [], icon: '🧘' }
         ];
 
         let currentTab = 'weekly';
-        const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-        
-        // Helper to get today's date string
-        const getTodayStr = () => new Date().toISOString().split('T')[0];
-        
+        const getTodayKey = () => new Date().toISOString().split('T')[0];
+
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
@@ -58,91 +71,76 @@
             if (currentTab === 'today') renderToday(container);
             else if (currentTab === 'weekly') renderWeekly(container);
             else renderMonthly(container);
-            localStorage.setItem('habit_radar_real', JSON.stringify(habits));
+            localStorage.setItem('habit_radar_pro_v5', JSON.stringify(habits));
         }
 
-        // --- TODAY VIEW ---
         function renderToday(container) {
-            const todayStr = getTodayStr();
+            const todayKey = getTodayKey();
             container.innerHTML = `
-                <div class="py-8 text-center">
-                    <h2 class="text-4xl font-black text-slate-800">Today</h2>
-                    <p class="text-slate-400 font-bold uppercase tracking-widest text-xs mt-2 italic">Finish your goals to see them on the calendar</p>
-                </div>
+                <div class="py-10 text-center"><h2 class="text-4xl font-black text-slate-800">Today</h2></div>
                 <div class="space-y-4">
                     ${habits.map(h => {
-                        const isDone = h.history.includes(todayStr);
+                        const isDone = h.history.includes(todayKey);
                         return `
-                        <div onclick="toggleToday('${h.id}')" class="p-6 rounded-[2rem] border-2 flex justify-between items-center transition-all ${isDone ? 'bg-green-50 border-green-300' : 'bg-slate-50 border-slate-100'}">
+                        <div onclick="toggleToday(${h.id})" class="p-6 rounded-[2rem] border-2 flex justify-between items-center transition-all ${isDone ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-100'}">
                             <span class="font-bold text-lg ${isDone ? 'text-green-700' : 'text-slate-600'}">${h.name}</span>
                             <div class="w-10 h-10 rounded-full border-2 flex items-center justify-center ${isDone ? 'bg-green-500 border-green-500' : 'border-slate-300'}">
-                                ${isDone ? '<span class="text-white text-xl">✓</span>' : ''}
+                                ${isDone ? '<span class="text-white">✓</span>' : ''}
                             </div>
                         </div>`;
                     }).join('')}
                 </div>`;
         }
 
-        // --- WEEKLY VIEW ---
         function renderWeekly(container) {
             container.innerHTML = habits.map(h => `
-                <div class="p-6 rounded-[2.5rem] mb-6 shadow-sm bg-slate-50 border border-slate-100" style="background-color: ${h.color}">
+                <div class="p-6 rounded-[2.5rem] mb-6 shadow-sm relative" style="background-color: ${h.color}">
+                    <button onclick="deleteHabit(${h.id})" class="absolute top-4 right-4 text-slate-400 font-bold text-xs">✕</button>
                     <div class="flex items-center gap-4 mb-6">
                         <div class="w-14 h-14 bg-white/60 rounded-2xl flex items-center justify-center text-2xl shadow-inner">${h.icon}</div>
-                        <div><h3 class="font-black text-slate-800 text-lg">${h.name}</h3><p class="text-xs font-bold text-orange-600">🔥 ${h.history.length} Days Total</p></div>
+                        <div><h3 class="font-black text-slate-800 text-lg">${h.name}</h3><p class="text-xs font-bold text-orange-600 uppercase tracking-tighter">🔥 ${h.history.length} Days Total</p></div>
                     </div>
-                    <p class="text-[10px] font-black text-slate-400 mb-4 italic text-center underline">Click 'Today' tab to mark progress</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase italic text-center">Check 'Today' tab to track</p>
                 </div>
             `).join('');
         }
 
-        // --- MONTHLY VIEW (REAL DATA) ---
         function renderMonthly(container) {
             const date = new Date();
-            const monthName = date.toLocaleString('default', { month: 'long' });
-            const year = date.getFullYear();
-            const daysInMonth = new Date(year, date.getMonth() + 1, 0).getDate();
-
-            container.innerHTML = `
-                <h2 class="text-2xl font-black mb-8 text-slate-800">${monthName} ${year}</h2>
-                <div class="space-y-10">
-                    ${habits.map(h => `
-                        <div>
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="font-black text-slate-700 text-sm uppercase tracking-wider">${h.name}</span>
-                                <span class="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">${h.history.length} Done</span>
-                            </div>
-                            <div class="calendar-grid">
-                                ${Array.from({length: daysInMonth}).map((_, i) => {
-                                    const dayNum = i + 1;
-                                    // Construct the ID for this specific day: e.g., "2026-02-12"
-                                    const dateKey = `${year}-${String(date.getMonth()+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-                                    const isDone = h.history.includes(dateKey);
-                                    
-                                    return `
-                                        <div class="day-box ${isDone ? 'bg-green-500 text-white shadow-lg shadow-green-100' : 'bg-slate-100 text-slate-300'}">
-                                            ${dayNum}
-                                        </div>`;
-                                }).join('')}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>`;
+            const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            container.innerHTML = habits.map(h => `
+                <div class="bg-slate-50 p-6 rounded-[2rem] mb-6">
+                    <h3 class="font-black text-slate-700 text-sm mb-4">${h.name.toUpperCase()}</h3>
+                    <div class="calendar-grid">
+                        ${Array.from({length: daysInMonth}).map((_, i) => {
+                            const dNum = i + 1;
+                            const dKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(dNum).padStart(2,'0')}`;
+                            const isDone = h.history.includes(dKey);
+                            return `<div class="day-box ${isDone ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}">${dNum}</div>`;
+                        }).join('')}
+                    </div>
+                </div>`).join('');
         }
 
         function toggleToday(id) {
-            const h = habits.find(x => x.id == id);
-            const todayStr = getTodayStr();
-            
-            if (h.history.includes(todayStr)) {
-                h.history = h.history.filter(d => d !== todayStr); // Uncheck
-            } else {
-                h.history.push(todayStr); // Check
-            }
+            const h = habits.find(x => x.id === id);
+            const today = getTodayKey();
+            if(h.history.includes(today)) h.history = h.history.filter(d => d !== today);
+            else h.history.push(today);
             render();
         }
 
-        // Run on start
+        function saveHabit() {
+            const name = document.getElementById('h-input').value;
+            if(!name) return;
+            habits.unshift({ id: Date.now(), name, color: '#F1F5F9', accent: '#94A3B8', history: [], icon: '⭐' });
+            document.getElementById('h-input').value = '';
+            document.getElementById('modal').style.display = 'none';
+            render();
+        }
+
+        function deleteHabit(id) { if(confirm("Delete habit?")) { habits = habits.filter(x => x.id !== id); render(); } }
+
         render();
     </script>
 </body>
